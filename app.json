@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "findme",
+    "slug": "snack-b3eca93c-ef97-4869-a2ae-aaff8285d930",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e95a2f08-fee5-4daa-9fcd-bcb4a188a188"
+      }
+    }
+  }
+}
