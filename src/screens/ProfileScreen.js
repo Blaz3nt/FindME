@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, Button, ActivityIndicator, Alert } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome'; // Import the icon library
+import { View, Text, Image, Pressable, ActivityIndicator, Alert } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Svg, { LinearGradient, Rect, Stop } from 'react-native-svg'; 
+import styles from '../styles/ProfileStyles'; 
+import buttonStyles from '../styles/ButtonSyles'; 
 
 export default function ProfileScreen({ navigation }) {
   const [profile, setProfile] = useState(null);
@@ -17,15 +20,15 @@ export default function ProfileScreen({ navigation }) {
           throw new Error('No access token found');
         }
 
-        const response = await fetch('https://61.245.128.140:3000/api/profile', {
+        const response = await fetch('https://api.arise.vision:3000/api/profile', {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
+            'Authorization': `Bearer ${accessToken}`,
+          },
         });
 
         const userData = await response.json();
-        console.log('API Response:', userData);  // Log the response to verify it
+        console.log('API Response:', userData);
 
         if (response.ok && userData.hascompletedprofile) {
           setProfile(userData);
@@ -40,8 +43,15 @@ export default function ProfileScreen({ navigation }) {
       }
     };
 
-    fetchProfile();
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchProfile(); // Refresh the profile data whenever the screen is focused
+    });
+
+    fetchProfile(); // Initial load
+
+    return unsubscribe;
   }, [navigation]);
+
 
   if (loading) {
     return <ActivityIndicator size="large" color="#0000ff" />;
@@ -53,36 +63,31 @@ export default function ProfileScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {profile.profile_image_url ? (
-        <Image source={{ uri: profile.profile_image_url }} style={styles.profileImage} />
-      ) : (
-        <Icon name="user-circle" size={120} color="#ccc" style={styles.profileImage} /> // Default icon
-      )}
-      <Text style={styles.label}>Bio: {profile.bio}</Text>
-      <Text style={styles.label}>Gender: {profile.gender}</Text>
-      <Text style={styles.label}>Age: {profile.age}</Text>
-      <Text style={styles.label}>Location: {profile.location}</Text>
-      <Button title="Edit Profile" onPress={() => navigation.navigate('EditProfile')} />
+      <View style={styles.contentContainer}> 
+        {profile.profile_image_url ? (
+          <Image source={{ uri: profile.profile_image_url }} style={styles.profileImage} />
+        ) : (
+          <Icon name="user-circle" size={120} color="#ccc" style={styles.profileImage} /> 
+        )}
+        <Text style={styles.label}>Bio: {profile.bio}</Text>
+        <Text style={styles.label}>Gender: {profile.gender}</Text>
+        <Text style={styles.label}>Age: {profile.age}</Text>
+        <Text style={styles.label}>Location: {profile.location}</Text>
+
+        <Pressable 
+          style={buttonStyles.buttonContainer} 
+          onPress={() => navigation.navigate('EditProfile')}
+        >
+          <Svg height="56" width="100%"> 
+            <LinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+              <Stop offset="0" stopColor="#007bff" />
+              <Stop offset="1" stopColor="#0056b3" />
+            </LinearGradient>
+            <Rect x="0" y="0" width="100%" height="100%" fill="url(#grad)" rx={12} /> 
+          </Svg>
+          <Text style={buttonStyles.buttonText}>Edit Profile</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 24,
-    backgroundColor: '#f0f0f0',
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginBottom: 24,
-    alignSelf: 'center',
-  },
-  label: {
-    fontSize: 18,
-    marginBottom: 8,
-  },
-});

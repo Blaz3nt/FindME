@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, Pressable, Alert, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadProfileImage } from './uploadProfileImage';  // Import the upload function
+import Svg, { LinearGradient, Rect, Stop } from 'react-native-svg'; 
+import styles from '../styles/EditProfileScreenStyle';  // Import the styles
+import buttonStyles from '../styles/ButtonSyles';  // Import the common button styles
 
 export default function EditProfileScreen({ navigation }) {
   const [bio, setBio] = useState('');
@@ -19,18 +24,17 @@ export default function EditProfileScreen({ navigation }) {
           throw new Error('No access token found');
         }
 
-        const response = await fetch('https://61.245.128.140:3000/api/profile', {
+        const response = await fetch('https://api.arise.vision:3000/api/profile', {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
+            'Authorization': `Bearer ${accessToken}`,
+          },
         });
 
         const userData = await response.json();
         console.log('API Response:', userData);
 
         if (response.ok) {
-          // Populate the fields if data exists
           if (userData) {
             setBio(userData.bio || '');
             setGender(userData.gender || '');
@@ -50,16 +54,38 @@ export default function EditProfileScreen({ navigation }) {
     fetchProfile();
   }, []);
 
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      try {
+        setLoading(true);
+        const imageUrl = await uploadProfileImage(result.uri);  // Use the separated upload function
+        setProfileImageUrl(imageUrl);  // Set the profile image URL after upload
+      } catch (error) {
+        Alert.alert('Error', `Failed to upload image: ${error.message}`);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   const handleSave = async () => {
+    setLoading(true);
+
     try {
       const accessToken = await AsyncStorage.getItem('accessToken');
-
       if (!accessToken) {
         throw new Error('No access token found');
       }
 
-      const response = await fetch('https://61.245.128.140:3000/api/profile', {
-        method: 'POST', // Or 'PUT' depending on your API implementation
+      const response = await fetch('https://api.arise.vision:3000/api/profile', {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
@@ -67,9 +93,9 @@ export default function EditProfileScreen({ navigation }) {
         body: JSON.stringify({
           bio,
           gender,
-          age: Number(age), // Ensure age is sent as a number
+          age: Number(age),
           location,
-          profile_image_url: profileImageUrl,
+          profile_image_url: profileImageUrl,  // Use the uploaded image URL
           hascompletedprofile: true,
         }),
       });
@@ -79,19 +105,33 @@ export default function EditProfileScreen({ navigation }) {
       }
 
       Alert.alert('Success', 'Profile saved successfully!');
-      navigation.navigate('Profile');
+      navigation.navigate('Profile', { refresh: true });  // Trigger a refresh on the Profile screen
     } catch (error) {
       console.error('Error saving profile:', error.message);
       Alert.alert('Error', 'Failed to save profile. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
-  }
-
   return (
     <View style={styles.container}>
+      <Text style={styles.label}>Profile Image:</Text>
+      <Image source={{ uri: profileImageUrl }} style={styles.profileImage} />
+      <Pressable 
+        style={buttonStyles.buttonContainer}  
+        onPress={pickImage}
+    >
+          <Svg height="56" width="100%"> 
+              <LinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+                  <Stop offset="0" stopColor="#007bff" />
+                  <Stop offset="1" stopColor="#0056b3" />
+              </LinearGradient>
+              <Rect x="0" y="0" width="100%" height="100%" fill="url(#grad)" rx={12} /> 
+          </Svg>
+          <Text style={buttonStyles.buttonText}>Pick an image</Text> 
+      </Pressable>
+
       <Text style={styles.label}>Bio:</Text>
       <TextInput
         style={styles.input}
@@ -125,37 +165,21 @@ export default function EditProfileScreen({ navigation }) {
         onChangeText={setLocation}
       />
 
-      <Text style={styles.label}>Profile Image URL:</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your profile image URL"
-        value={profileImageUrl}
-        onChangeText={setProfileImageUrl}
-      />
+      <Pressable 
+  style={buttonStyles.buttonContainer} 
+  onPress={handleSave}
+>
+  <Svg height="56" width="100%"> 
+    <LinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+      <Stop offset="0" stopColor="#007bff" />
+      <Stop offset="1" stopColor="#0056b3" />
+    </LinearGradient>
+    <Rect x="0" y="0" width="100%" height="100%" fill="url(#grad)" rx={12} />
+  </Svg>
+  <Text style={buttonStyles.buttonText}>Save</Text>
+</Pressable>
 
-      <Button title="Save" onPress={handleSave} />
+
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 24,
-    backgroundColor: '#f0f0f0',
-  },
-  label: {
-    fontSize: 18,
-    marginBottom: 8,
-  },
-  input: {
-    height: 48,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 16,
-    paddingHorizontal: 12,
-    backgroundColor: 'white',
-  },
-});

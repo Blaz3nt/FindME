@@ -12,13 +12,15 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "Test-Build-FindMe"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.blaz3nt.snackb3eca93cef974869a2aeaaff8285d930"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -26,7 +28,14 @@
     "extra": {
       "eas": {
         "projectId": "e95a2f08-fee5-4daa-9fcd-bcb4a188a188"
-      }
+      },
+      "apiUrl": "http://61.245.128.140:19000"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e95a2f08-fee5-4daa-9fcd-bcb4a188a188"
     }
   }
 }
